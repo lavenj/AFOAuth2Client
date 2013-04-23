@@ -21,10 +21,15 @@
 // THE SOFTWARE.
 
 #import "AFHTTPClient.h"
-
+#import <RestKit/RestKit.h>
 #ifndef _SECURITY_SECITEM_H_
 #warning Security framework not found in project, or not included in precompiled header. Keychain persistence functionality will not be available.
 #endif
+
+
+@interface RKOAuth2HTTPRequestOperation: RKHTTPRequestOperation
+
+@end
 
 @class AFOAuthCredential;
 

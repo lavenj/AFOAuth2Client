@@ -406,3 +406,29 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 }
 
 @end
+
+@implementation RKOAuth2HTTPRequestOperation
+
+- (NSError *)error
+{
+	//	[self.lock lock];
+	
+	NSError *jsonError = nil;
+	id jsonResponse = [NSJSONSerialization JSONObjectWithData:self.responseData options:kNilOptions error:&jsonError];
+	if( jsonResponse ) {
+		//NSLog(@"jsonResponse: %@", jsonResponse);
+		NSString *reason = jsonResponse[@"error"];
+		if( [reason isEqualToString:@"Access token is not valid"] ) {
+			//			NSLog(@"Failed because access token expired.");
+			NSError * error = [NSError errorWithDomain:kAFOAuthClientError code:kAFOAuthClientErrorTokenExpired userInfo:jsonResponse];
+			return error;
+		}
+	}
+	if( jsonError ) {
+		NSLog(@"error parsing error json: %@", jsonError);
+	}
+	return [super error];
+}
+
+@end
+
