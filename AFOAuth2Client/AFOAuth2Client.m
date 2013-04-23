@@ -225,6 +225,28 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
     [self enqueueHTTPRequestOperation:requestOperation];
 }
 
+
+- (AFHTTPRequestOperation *)HTTPRequestOperationWithRequest:(NSURLRequest *)urlRequest
+                                                    success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
+                                                    failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure {
+	NSLog(@"AFOAuth2Client HTTPRequestOperationWithRequest");
+	return [super HTTPRequestOperationWithRequest:urlRequest success:success failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+		NSError *jsonError = nil;
+		id jsonResponse = [NSJSONSerialization JSONObjectWithData:operation.responseData options:kNilOptions error:&jsonError];
+		if( jsonResponse ) {
+			//NSLog(@"jsonResponse: %@", jsonResponse);
+			NSString *reason = jsonResponse[@"error"];
+			if( [reason isEqualToString:@"Access token is not valid"] ) {
+				NSLog(@"Failed because access token expired.");
+			}
+		}
+		if( jsonError ) {
+			NSLog(@"error parsing error json: %@", jsonError);
+		}
+		failure(operation, error);
+	}];
+}
+
 @end
 
 #pragma mark -
@@ -283,6 +305,8 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 - (BOOL)isExpired {
     return [self.expiration compare:[NSDate date]] == NSOrderedAscending;
 }
+
+
 
 #pragma mark Keychain
 
