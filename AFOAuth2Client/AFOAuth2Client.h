@@ -215,3 +215,6 @@ extern NSString * const kAFOAuthCodeGrantType;
 extern NSString * const kAFOAuthClientCredentialsGrantType;
 extern NSString * const kAFOAuthPasswordCredentialsGrantType;
 extern NSString * const kAFOAuthRefreshGrantType;
+extern NSString * const kAFOAuthClientError;
+extern NSInteger const kAFOAuthClientErrorTokenExpired;
+

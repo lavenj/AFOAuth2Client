@@ -28,6 +28,8 @@ NSString * const kAFOAuthCodeGrantType = @"authorization_code";
 NSString * const kAFOAuthClientCredentialsGrantType = @"client_credentials";
 NSString * const kAFOAuthPasswordCredentialsGrantType = @"password";
 NSString * const kAFOAuthRefreshGrantType = @"refresh_token";
+NSString * const kAFOAuthClientError = @"com.alamofire.networking.oauth2.error";
+NSInteger const kAFOAuthClientErrorTokenExpired = -2;
 
 #ifdef _SECURITY_SECITEM_H_
 NSString * const kAFOAuthCredentialServiceName = @"AFOAuthCredentialService";
@@ -238,6 +240,9 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 			NSString *reason = jsonResponse[@"error"];
 			if( [reason isEqualToString:@"Access token is not valid"] ) {
 				NSLog(@"Failed because access token expired.");
+				NSError * error = [NSError errorWithDomain:kAFOAuthClientError code:kAFOAuthClientErrorTokenExpired userInfo:jsonResponse];
+				failure(operation, error);
+				return;
 			}
 		}
 		if( jsonError ) {
@@ -256,6 +261,8 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 @property (readwrite, nonatomic) NSString *tokenType;
 @property (readwrite, nonatomic) NSString *refreshToken;
 @property (readwrite, nonatomic) NSDate *expiration;
+@property (readwrite, nonatomic) NSString *username;
+@property (readwrite, nonatomic) NSString *password;
 @end
 
 @implementation AFOAuthCredential
@@ -382,7 +389,9 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
     self.accessToken = [decoder decodeObjectForKey:@"accessToken"];
     self.tokenType = [decoder decodeObjectForKey:@"tokenType"];
     self.refreshToken = [decoder decodeObjectForKey:@"refreshToken"];
-    self.expiration = [decoder decodeObjectForKey:@"expiration"];
+	self.expiration = [decoder decodeObjectForKey:@"expiration"];
+	self.username = [decoder decodeObjectForKey:@"username"];
+	self.password = [decoder decodeObjectForKey:@"password"];
 
     return self;
 }
@@ -391,7 +400,9 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
     [encoder encodeObject:self.accessToken forKey:@"accessToken"];
     [encoder encodeObject:self.tokenType forKey:@"tokenType"];
     [encoder encodeObject:self.refreshToken forKey:@"refreshToken"];
-    [encoder encodeObject:self.expiration forKey:@"expiration"];
+	[encoder encodeObject:self.expiration forKey:@"expiration"];
+	[encoder encodeObject:self.username forKey:@"username"];
+	[encoder encodeObject:self.password forKey:@"password"];
 }
 
 @end
