@@ -47,6 +47,11 @@
  */
 @property (readonly, nonatomic) NSString *clientID;
 
+/**
+ 
+ */
+@property (readonly, nonatomic) NSURL *oAuthURL;
+
 ///------------------------------------------------
 /// @name Creating and Initializing OAuth 2 Clients
 ///------------------------------------------------
@@ -54,12 +59,13 @@
 /**
  
  */
-+ (instancetype)clientWithBaseURL:(NSURL *)url clientID:(NSString *)clientID secret:(NSString *)secret;
++ (instancetype)clientWithBaseURL:(NSURL *)url oAuthURL:(NSURL *)oAuthURL clientID:(NSString *)clientID secret:(NSString *)secret;
 
 /**
  
  */
 - (id)initWithBaseURL:(NSURL *)url
+						 oAuthURL:(NSURL *)oAuthURL
              clientID:(NSString *)clientID
                secret:(NSString *)secret;
 

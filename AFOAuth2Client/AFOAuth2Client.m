@@ -46,18 +46,21 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 @property (readwrite, nonatomic) NSString *serviceProviderIdentifier;
 @property (readwrite, nonatomic) NSString *clientID;
 @property (readwrite, nonatomic) NSString *secret;
+@property (readwrite, nonatomic) NSURL *oAuthURL;
 @end
 
 @implementation AFOAuth2Client
 
 + (instancetype)clientWithBaseURL:(NSURL *)url
+												 oAuthURL:(NSURL *)oAuthURL
                          clientID:(NSString *)clientID
                            secret:(NSString *)secret
 {
-    return [[self alloc] initWithBaseURL:url clientID:clientID secret:secret];
+	return [[self alloc] initWithBaseURL:url oAuthURL:oAuthURL clientID:clientID secret:secret];
 }
 
 - (id)initWithBaseURL:(NSURL *)url
+						 oAuthURL:(NSURL *)oAuthURL
              clientID:(NSString *)clientID
                secret:(NSString *)secret
 {
@@ -68,7 +71,8 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
         return nil;
     }
 
-    self.serviceProviderIdentifier = [self.baseURL host];
+	self.oAuthURL = oAuthURL;
+    self.serviceProviderIdentifier = [self.oAuthURL host];
     self.clientID = clientID;
     self.secret = secret;
 
@@ -170,7 +174,15 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 
     [self clearAuthorizationHeader];
 
+	//switch our base url real quick
+	
     NSMutableURLRequest *mutableRequest = [self requestWithMethod:@"POST" path:path parameters:parameters];
+
+	NSString *oldUrl = mutableRequest.URL.absoluteString;
+	NSString *url = [oldUrl stringByReplacingOccurrencesOfString:self.baseURL.absoluteString withString:self.oAuthURL.absoluteString];
+	NSLog(@"string change:\nold: %@\nnew: %@", oldUrl, url);
+	mutableRequest.URL = [NSURL URLWithString:url];
+	NSLog(@"url: %@", mutableRequest.URL);
     [mutableRequest setValue:@"application/json" forHTTPHeaderField:@"Accept"];
 
     AFHTTPRequestOperation *requestOperation = [self HTTPRequestOperationWithRequest:mutableRequest success:^(AFHTTPRequestOperation *operation, id responseObject) {
