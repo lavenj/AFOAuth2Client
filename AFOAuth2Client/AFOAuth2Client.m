@@ -240,7 +240,7 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 			NSString *reason = jsonResponse[@"error"];
 			if( [reason isEqualToString:@"Access token is not valid"] ) {
 				NSLog(@"Failed because access token expired.");
-				NSError * error = [NSError errorWithDomain:kAFOAuthClientError code:kAFOAuthClientErrorTokenExpired userInfo:jsonResponse];
+				NSError * error = [NSError errorWithDomain:kAFOAuthClientError code:kAFOAuthClientErrorTokenInvalid userInfo:jsonResponse];
 				failure(operation, error);
 				return;
 			}
