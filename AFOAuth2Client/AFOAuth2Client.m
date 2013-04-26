@@ -29,7 +29,7 @@ NSString * const kAFOAuthClientCredentialsGrantType = @"client_credentials";
 NSString * const kAFOAuthPasswordCredentialsGrantType = @"password";
 NSString * const kAFOAuthRefreshGrantType = @"refresh_token";
 NSString * const kAFOAuthClientError = @"com.alamofire.networking.oauth2.error";
-NSInteger const kAFOAuthClientErrorTokenExpired = -2;
+NSInteger const kAFOAuthClientErrorTokenInvalid = -2;
 
 #ifdef _SECURITY_SECITEM_H_
 NSString * const kAFOAuthCredentialServiceName = @"AFOAuthCredentialService";
@@ -421,9 +421,10 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 	if( jsonResponse ) {
 		//NSLog(@"jsonResponse: %@", jsonResponse);
 		NSString *reason = jsonResponse[@"error"];
-		if( [reason isEqualToString:@"Access token is not valid"] ) {
+		//for now, any error starting with "Access token" will be called a token error.
+		if( [reason hasPrefix:@"Access token"] ) {
 			//			NSLog(@"Failed because access token expired.");
-			NSError * error = [NSError errorWithDomain:kAFOAuthClientError code:kAFOAuthClientErrorTokenExpired userInfo:jsonResponse];
+			NSError * error = [NSError errorWithDomain:kAFOAuthClientError code:kAFOAuthClientErrorTokenInvalid userInfo:jsonResponse];
 			return error;
 		}
 	}
