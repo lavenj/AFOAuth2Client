@@ -413,6 +413,9 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 {
 	//	[self.lock lock];
 	
+	if( !self.responseData ) {
+		return [super error];
+	}
 	NSError *jsonError = nil;
 	id jsonResponse = [NSJSONSerialization JSONObjectWithData:self.responseData options:kNilOptions error:&jsonError];
 	if( jsonResponse ) {
