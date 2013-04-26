@@ -231,11 +231,10 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 - (AFHTTPRequestOperation *)HTTPRequestOperationWithRequest:(NSURLRequest *)urlRequest
                                                     success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
                                                     failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure {
-	NSLog(@"AFOAuth2Client HTTPRequestOperationWithRequest");
 	return [super HTTPRequestOperationWithRequest:urlRequest success:success failure:^(AFHTTPRequestOperation *operation, NSError *error) {
 		NSError *jsonError = nil;
 		id jsonResponse = [NSJSONSerialization JSONObjectWithData:operation.responseData options:kNilOptions error:&jsonError];
-		if( jsonResponse ) {
+		if( jsonResponse && [jsonResponse isKindOfClass:[NSDictionary class]] ) {
 			//NSLog(@"jsonResponse: %@", jsonResponse);
 			NSString *reason = jsonResponse[@"error"];
 			if( [reason isEqualToString:@"Access token is not valid"] ) {
@@ -418,7 +417,7 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 	}
 	NSError *jsonError = nil;
 	id jsonResponse = [NSJSONSerialization JSONObjectWithData:self.responseData options:kNilOptions error:&jsonError];
-	if( jsonResponse ) {
+	if( jsonResponse && [jsonResponse isKindOfClass:[NSDictionary class]] ) {
 		//NSLog(@"jsonResponse: %@", jsonResponse);
 		NSString *reason = jsonResponse[@"error"];
 		//for now, any error starting with "Access token" will be called a token error.
