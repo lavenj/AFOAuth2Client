@@ -419,12 +419,14 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 	id jsonResponse = [NSJSONSerialization JSONObjectWithData:self.responseData options:kNilOptions error:&jsonError];
 	if( jsonResponse && [jsonResponse isKindOfClass:[NSDictionary class]] ) {
 		//NSLog(@"jsonResponse: %@", jsonResponse);
-		NSString *reason = jsonResponse[@"error"];
-		//for now, any error starting with "Access token" will be called a token error.
-		if( [reason hasPrefix:@"Access token"] ) {
-			//			NSLog(@"Failed because access token expired.");
-			NSError * error = [NSError errorWithDomain:kAFOAuthClientError code:kAFOAuthClientErrorTokenInvalid userInfo:jsonResponse];
-			return error;
+		if( [jsonResponse[@"error"] isKindOfClass:[NSString class]] ) {
+			NSString *reason = jsonResponse[@"error"];
+			//for now, any error starting with "Access token" will be called a token error.
+			if( [reason hasPrefix:@"Access token"] ) {
+				//			NSLog(@"Failed because access token expired.");
+				NSError * error = [NSError errorWithDomain:kAFOAuthClientError code:kAFOAuthClientErrorTokenInvalid userInfo:jsonResponse];
+				return error;
+			}
 		}
 	}
 	if( jsonError ) {
