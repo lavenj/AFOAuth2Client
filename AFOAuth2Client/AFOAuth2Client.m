@@ -419,11 +419,29 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 	id jsonResponse = [NSJSONSerialization JSONObjectWithData:self.responseData options:kNilOptions error:&jsonError];
 	if( jsonResponse && [jsonResponse isKindOfClass:[NSDictionary class]] ) {
 		//NSLog(@"jsonResponse: %@", jsonResponse);
-		if( [jsonResponse[@"error"] isKindOfClass:[NSString class]] ) {
-			NSString *reason = jsonResponse[@"error"];
+		//Printing description of jsonResponse:
+//		{
+//			error =     {
+//        file = "/var/www/api/releases/a6b6ba32549aa8df3a29b9737a702a47d5a5830c/vendor/league/oauth2-server/src/League/OAuth2/Server/Resource.php";
+//        line = 186;
+//        message = "Access token is not valid";
+//        type = "League\\OAuth2\\Server\\Exception\\InvalidAccessTokenException";
+//			};
+//		}
+
+		id error = jsonResponse[@"error"];
+		if( [error isKindOfClass:[NSDictionary class]] ) {
+			NSString *reason = error[@"message"];
+			//for now, any error starting with "Access token" will be called a token error.
+			if( [reason isKindOfClass:[NSString class]] && [reason hasPrefix:@"Access token"] ) {
+				NSError * error = [NSError errorWithDomain:kAFOAuthClientError code:kAFOAuthClientErrorTokenInvalid userInfo:jsonResponse];
+				return error;
+			}
+		}
+		else if( [error isKindOfClass:[NSString class]] ) {
+			NSString *reason = error;
 			//for now, any error starting with "Access token" will be called a token error.
 			if( [reason hasPrefix:@"Access token"] ) {
-				//			NSLog(@"Failed because access token expired.");
 				NSError * error = [NSError errorWithDomain:kAFOAuthClientError code:kAFOAuthClientErrorTokenInvalid userInfo:jsonResponse];
 				return error;
 			}
