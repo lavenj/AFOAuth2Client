@@ -234,19 +234,41 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 	return [super HTTPRequestOperationWithRequest:urlRequest success:success failure:^(AFHTTPRequestOperation *operation, NSError *error) {
 		NSError *jsonError = nil;
 		id jsonResponse = [NSJSONSerialization JSONObjectWithData:operation.responseData options:kNilOptions error:&jsonError];
-		if( jsonResponse && [jsonResponse isKindOfClass:[NSDictionary class]] ) {
-			//NSLog(@"jsonResponse: %@", jsonResponse);
-			NSString *reason = jsonResponse[@"error"];
-			if( [reason isEqualToString:@"Access token is not valid"] ) {
-				NSLog(@"Failed because access token expired.");
-				NSError * error = [NSError errorWithDomain:kAFOAuthClientError code:kAFOAuthClientErrorTokenInvalid userInfo:jsonResponse];
-				failure(operation, error);
-				return;
-			}
-		}
+
 		if( jsonError ) {
 			NSLog(@"error parsing error json: %@", jsonError);
+			return failure(operation, error);
 		}
+
+		//NSLog(@"jsonResponse: %@", jsonResponse);
+		//Printing description of jsonResponse:
+		//		{
+		//			error =     {
+		//        file = "/var/www/api/releases/a6b6ba32549aa8df3a29b9737a702a47d5a5830c/vendor/league/oauth2-server/src/League/OAuth2/Server/Resource.php";
+		//        line = 186;
+		//        message = "Access token is not valid";
+		//        type = "League\\OAuth2\\Server\\Exception\\InvalidAccessTokenException";
+		//			};
+		//		}
+		
+		id errorResponse = jsonResponse[@"error"];
+		if( [errorResponse isKindOfClass:[NSDictionary class]] ) {
+			NSString *reason = errorResponse[@"message"];
+			//for now, any error starting with "Access token" will be called a token error.
+			if( [reason isKindOfClass:[NSString class]] && [reason hasPrefix:@"Access token"] ) {
+				NSError * error = [NSError errorWithDomain:kAFOAuthClientError code:kAFOAuthClientErrorTokenInvalid userInfo:jsonResponse];
+				return failure(operation, error);
+			}
+		}
+		else if( [errorResponse isKindOfClass:[NSString class]] ) {
+			NSString *reason = errorResponse;
+			//for now, any error starting with "Access token" will be called a token error.
+			if( [reason hasPrefix:@"Access token"] ) {
+				NSError * error = [NSError errorWithDomain:kAFOAuthClientError code:kAFOAuthClientErrorTokenInvalid userInfo:jsonResponse];
+				return failure(operation, error);
+			}
+		}
+
 		failure(operation, error);
 	}];
 }
