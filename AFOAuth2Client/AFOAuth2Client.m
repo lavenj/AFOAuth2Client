@@ -30,6 +30,7 @@ NSString * const kAFOAuthPasswordCredentialsGrantType = @"password";
 NSString * const kAFOAuthRefreshGrantType = @"refresh_token";
 NSString * const kAFOAuthClientError = @"com.alamofire.networking.oauth2.error";
 NSInteger const kAFOAuthClientErrorTokenInvalid = -2;
+NSInteger const kAFOAuthClientErrorAccountAlreadyExists = -3;
 
 #ifdef _SECURITY_SECITEM_H_
 NSString * const kAFOAuthCredentialServiceName = @"AFOAuthCredentialService";
@@ -228,10 +229,54 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 }
 
 
+-(NSError *)errorFromDictionary:(NSDictionary *)dict originalError:(NSError *)originalError {
+	NSLog(@"errorFromDictionary: %@", dict);
+	NSString *reason = nil;
+	id errorResponse = dict[@"error"];
+	if( [errorResponse isKindOfClass:[NSDictionary class]] ) {
+		//find the reason.
+		NSArray *keys = @[@"message", @"error"];
+		for(NSString *key in keys) {
+			if( [errorResponse[key] isKindOfClass:[NSString class]] ) {
+				NSLog(@"error for key %@ is %@", key, reason);
+				reason = errorResponse[key];
+				break;
+			}
+		}
+	}
+	else if( [errorResponse isKindOfClass:[NSString class]] ) {
+		reason = errorResponse;
+	}
+
+	NSLog(@"error is %@", reason);
+	if( reason != nil ) {
+		NSDictionary *userInfo = @{NSLocalizedFailureReasonErrorKey: reason, NSUnderlyingErrorKey:originalError};
+		if( [reason hasPrefix:@"Access token"] ) {
+			//for now, any error starting with "Access token" will be called a token error.
+			NSError * error = [NSError errorWithDomain:kAFOAuthClientError code:kAFOAuthClientErrorTokenInvalid userInfo:userInfo];
+			return error;
+		}
+		else if( [reason hasPrefix:@"The username has already been taken"] ) {
+			NSError * error = [NSError errorWithDomain:kAFOAuthClientError code:kAFOAuthClientErrorAccountAlreadyExists userInfo:userInfo];
+			return error;
+		}
+		else {
+			NSError * error = [NSError errorWithDomain:kAFOAuthClientError code:-1 userInfo:userInfo];
+			return error;
+		}
+	}
+	return nil;
+	
+}
+
 - (AFHTTPRequestOperation *)HTTPRequestOperationWithRequest:(NSURLRequest *)urlRequest
                                                     success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
                                                     failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure {
 	return [super HTTPRequestOperationWithRequest:urlRequest success:success failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+		if( error ) {
+			NSLog(@"failing: %@", error);
+//			NSLog(@"operation error: %@", [operation error]);
+		}
 		NSError *jsonError = nil;
 		id jsonResponse = [NSJSONSerialization JSONObjectWithData:operation.responseData options:kNilOptions error:&jsonError];
 
@@ -240,32 +285,10 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 			return failure(operation, error);
 		}
 
-		//NSLog(@"jsonResponse: %@", jsonResponse);
-		//Printing description of jsonResponse:
-		//		{
-		//			error =     {
-		//        file = "/var/www/api/releases/a6b6ba32549aa8df3a29b9737a702a47d5a5830c/vendor/league/oauth2-server/src/League/OAuth2/Server/Resource.php";
-		//        line = 186;
-		//        message = "Access token is not valid";
-		//        type = "League\\OAuth2\\Server\\Exception\\InvalidAccessTokenException";
-		//			};
-		//		}
-		
-		id errorResponse = jsonResponse[@"error"];
-		if( [errorResponse isKindOfClass:[NSDictionary class]] ) {
-			NSString *reason = errorResponse[@"message"];
-			//for now, any error starting with "Access token" will be called a token error.
-			if( [reason isKindOfClass:[NSString class]] && [reason hasPrefix:@"Access token"] ) {
-				NSError * error = [NSError errorWithDomain:kAFOAuthClientError code:kAFOAuthClientErrorTokenInvalid userInfo:jsonResponse];
-				return failure(operation, error);
-			}
-		}
-		else if( [errorResponse isKindOfClass:[NSString class]] ) {
-			NSString *reason = errorResponse;
-			//for now, any error starting with "Access token" will be called a token error.
-			if( [reason hasPrefix:@"Access token"] ) {
-				NSError * error = [NSError errorWithDomain:kAFOAuthClientError code:kAFOAuthClientErrorTokenInvalid userInfo:jsonResponse];
-				return failure(operation, error);
+		if( [jsonResponse isKindOfClass:[NSDictionary class]] ) {
+			NSError *customError = [self errorFromDictionary:jsonResponse originalError:error];
+			if( customError ) {
+				return failure(operation, customError);
 			}
 		}
 
@@ -432,6 +455,7 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 
 - (NSError *)error
 {
+	NSLog(@"***** in RKOAuth2HTTPRequestOperation error *****");
 	//	[self.lock lock];
 	
 	if( !self.responseData ) {
@@ -440,16 +464,6 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 	NSError *jsonError = nil;
 	id jsonResponse = [NSJSONSerialization JSONObjectWithData:self.responseData options:kNilOptions error:&jsonError];
 	if( jsonResponse && [jsonResponse isKindOfClass:[NSDictionary class]] ) {
-		//NSLog(@"jsonResponse: %@", jsonResponse);
-		//Printing description of jsonResponse:
-//		{
-//			error =     {
-//        file = "/var/www/api/releases/a6b6ba32549aa8df3a29b9737a702a47d5a5830c/vendor/league/oauth2-server/src/League/OAuth2/Server/Resource.php";
-//        line = 186;
-//        message = "Access token is not valid";
-//        type = "League\\OAuth2\\Server\\Exception\\InvalidAccessTokenException";
-//			};
-//		}
 
 		id error = jsonResponse[@"error"];
 		if( [error isKindOfClass:[NSDictionary class]] ) {

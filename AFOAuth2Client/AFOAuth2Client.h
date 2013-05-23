@@ -222,4 +222,4 @@ extern NSString * const kAFOAuthPasswordCredentialsGrantType;
 extern NSString * const kAFOAuthRefreshGrantType;
 extern NSString * const kAFOAuthClientError;
 extern NSInteger const kAFOAuthClientErrorTokenInvalid;
-
+extern NSInteger const kAFOAuthClientErrorAccountAlreadyExists;
