@@ -38,6 +38,8 @@
  */
 @interface AFOAuth2Client : AFHTTPClient
 
+typedef void (^AFOAuthSuccessBlock)(AFOAuthCredential *credential, NSDictionary *userInfo);
+
 ///------------------------------------------
 /// @name Accessing OAuth 2 Client Properties
 ///------------------------------------------
@@ -74,6 +76,7 @@
              clientID:(NSString *)clientID
                secret:(NSString *)secret;
 
+
 /**
  
  */
@@ -89,7 +92,7 @@
 - (void)authenticateUsingOAuthWithPath:(NSString *)path
                                   code:(NSString *)code
                            redirectURI:(NSString *)uri
-                               success:(void (^)(AFOAuthCredential *credential))success
+                               success:(AFOAuthSuccessBlock)success
                                failure:(void (^)(NSError *error))failure;
 
 /**
@@ -99,7 +102,7 @@
                               username:(NSString *)username
                               password:(NSString *)password
                                  scope:(NSString *)scope
-                               success:(void (^)(AFOAuthCredential *credential))success
+                               success:(AFOAuthSuccessBlock)success
                                failure:(void (^)(NSError *error))failure;
 
 /**
@@ -107,7 +110,7 @@
  */
 - (void)authenticateUsingOAuthWithPath:(NSString *)path
                                  scope:(NSString *)scope
-                               success:(void (^)(AFOAuthCredential *credential))success
+                               success:(AFOAuthSuccessBlock)success
                                failure:(void (^)(NSError *error))failure;
 
 /**
@@ -115,7 +118,7 @@
  */
 - (void)authenticateUsingOAuthWithPath:(NSString *)path
                           refreshToken:(NSString *)refreshToken
-                               success:(void (^)(AFOAuthCredential *credential))success
+                               success:(AFOAuthSuccessBlock)success
                                failure:(void (^)(NSError *error))failure;
 
 /**
@@ -123,7 +126,7 @@
  */
 - (void)authenticateUsingOAuthWithPath:(NSString *)path
                             parameters:(NSDictionary *)parameters
-                               success:(void (^)(AFOAuthCredential *credential))success
+                               success:(AFOAuthSuccessBlock)success
                                failure:(void (^)(NSError *error))failure;
 
 @end
@@ -221,5 +224,9 @@ extern NSString * const kAFOAuthClientCredentialsGrantType;
 extern NSString * const kAFOAuthPasswordCredentialsGrantType;
 extern NSString * const kAFOAuthRefreshGrantType;
 extern NSString * const kAFOAuthClientError;
+
+extern NSString * const kAFOAuthClientAccountIsNewKey;
+
 extern NSInteger const kAFOAuthClientErrorTokenInvalid;
 extern NSInteger const kAFOAuthClientErrorAccountAlreadyExists;
+

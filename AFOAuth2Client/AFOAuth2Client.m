@@ -29,6 +29,8 @@ NSString * const kAFOAuthClientCredentialsGrantType = @"client_credentials";
 NSString * const kAFOAuthPasswordCredentialsGrantType = @"password";
 NSString * const kAFOAuthRefreshGrantType = @"refresh_token";
 NSString * const kAFOAuthClientError = @"com.alamofire.networking.oauth2.error";
+NSString * const kAFOAuthClientAccountIsNewKey = @"accountIsNew";
+
 NSInteger const kAFOAuthClientErrorTokenInvalid = -2;
 NSInteger const kAFOAuthClientErrorAccountAlreadyExists = -3;
 
@@ -110,7 +112,7 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 - (void)authenticateUsingOAuthWithPath:(NSString *)path
                                   code:(NSString *)code
                            redirectURI:(NSString *)uri
-                               success:(void (^)(AFOAuthCredential *credential))success
+                               success:(AFOAuthSuccessBlock)success
                                failure:(void (^)(NSError *error))failure
 {
 	NSMutableDictionary *mutableParameters = [NSMutableDictionary dictionary];
@@ -126,7 +128,7 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
                               username:(NSString *)username
                               password:(NSString *)password
                                  scope:(NSString *)scope
-                               success:(void (^)(AFOAuthCredential *credential))success
+                               success:(AFOAuthSuccessBlock)success
                                failure:(void (^)(NSError *error))failure
 {
 	NSMutableDictionary *mutableParameters = [NSMutableDictionary dictionary];
@@ -141,7 +143,7 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 
 - (void)authenticateUsingOAuthWithPath:(NSString *)path
                                  scope:(NSString *)scope
-                               success:(void (^)(AFOAuthCredential *credential))success
+                               success:(AFOAuthSuccessBlock)success
                                failure:(void (^)(NSError *error))failure
 {
 	NSMutableDictionary *mutableParameters = [NSMutableDictionary dictionary];
@@ -154,7 +156,7 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 
 - (void)authenticateUsingOAuthWithPath:(NSString *)path
                           refreshToken:(NSString *)refreshToken
-                               success:(void (^)(AFOAuthCredential *credential))success
+                               success:(AFOAuthSuccessBlock)success
                                failure:(void (^)(NSError *error))failure
 {
 	NSMutableDictionary *mutableParameters = [NSMutableDictionary dictionary];
@@ -167,7 +169,7 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 
 - (void)authenticateUsingOAuthWithPath:(NSString *)path
                             parameters:(NSDictionary *)parameters
-                               success:(void (^)(AFOAuthCredential *credential))success
+                               success:(AFOAuthSuccessBlock)success
                                failure:(void (^)(NSError *error))failure
 {
 	NSMutableDictionary *mutableParameters = [NSMutableDictionary dictionaryWithDictionary:parameters];
@@ -189,8 +191,10 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 	[mutableRequest setValue:@"application/json" forHTTPHeaderField:@"Accept"];
 	
 	AFHTTPRequestOperation *requestOperation = [self HTTPRequestOperationWithRequest:mutableRequest success:^(AFHTTPRequestOperation *operation, id responseObject) {
+		
 		if ([responseObject valueForKey:@"error"]) {
 			if (failure) {
+				NSLog(@"failing in request op");
 				// TODO: Resolve the `error` field into a proper NSError object
 				// http://tools.ietf.org/html/rfc6749#section-5.2
 				failure(nil);
@@ -217,7 +221,8 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 		[self setAuthorizationHeaderWithCredential:credential];
 		
 		if (success) {
-			success(credential);
+			NSDictionary *info = @{kAFOAuthClientAccountIsNewKey: [NSNumber numberWithBool:operation.response.statusCode == 201]};
+			success(credential, info);
 		}
 	} failure:^(AFHTTPRequestOperation *operation, NSError *error) {
 		if (failure) {
