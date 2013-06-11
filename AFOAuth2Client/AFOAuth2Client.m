@@ -278,22 +278,27 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
                                                     success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
                                                     failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure {
 	return [super HTTPRequestOperationWithRequest:urlRequest success:success failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+
+		
 		if( error ) {
 			NSLog(@"failing: %@", error);
 			//			NSLog(@"operation error: %@", [operation error]);
 		}
-		NSError *jsonError = nil;
-		id jsonResponse = [NSJSONSerialization JSONObjectWithData:operation.responseData options:kNilOptions error:&jsonError];
 		
-		if( jsonError ) {
-			NSLog(@"error parsing error json: %@", jsonError);
-			return failure(operation, error);
-		}
-		
-		if( [jsonResponse isKindOfClass:[NSDictionary class]] ) {
-			NSError *customError = [self errorFromDictionary:jsonResponse originalError:error];
-			if( customError ) {
-				return failure(operation, customError);
+		if( operation.responseData ) {
+			NSError *jsonError = nil;
+			id jsonResponse = [NSJSONSerialization JSONObjectWithData:operation.responseData options:kNilOptions error:&jsonError];
+			
+			if( jsonError ) {
+				NSLog(@"error parsing error json: %@", jsonError);
+				return failure(operation, error);
+			}
+			
+			if( [jsonResponse isKindOfClass:[NSDictionary class]] ) {
+				NSError *customError = [self errorFromDictionary:jsonResponse originalError:error];
+				if( customError ) {
+					return failure(operation, customError);
+				}
 			}
 		}
 		
@@ -460,7 +465,7 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 
 - (NSError *)error
 {
-	NSLog(@"***** in RKOAuth2HTTPRequestOperation error *****");
+//	NSLog(@"***** in RKOAuth2HTTPRequestOperation error *****");
 	//	[self.lock lock];
 	
 	if( !self.responseData ) {
