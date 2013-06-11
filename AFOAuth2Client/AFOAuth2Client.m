@@ -325,6 +325,7 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 @synthesize refreshToken = _refreshToken;
 @synthesize expiration = _expiration;
 @dynamic expired;
+@dynamic expirationDate;
 
 #pragma mark -
 
@@ -367,7 +368,10 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 	return [self.expiration compare:[NSDate date]] == NSOrderedAscending;
 }
 
-
+-(NSDate *)expirationDate
+{
+	return self.expiration;
+}
 
 #pragma mark Keychain
 

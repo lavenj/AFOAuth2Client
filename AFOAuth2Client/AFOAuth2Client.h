@@ -162,6 +162,11 @@ typedef void (^AFOAuthSuccessBlock)(AFOAuthCredential *credential, NSDictionary 
  */
 @property (readonly, nonatomic, assign, getter = isExpired) BOOL expired;
 
+/**
+ 
+ */
+@property (readonly, nonatomic) NSDate *expirationDate;
+
 ///--------------------------------------------
 /// @name Creating and Initializing Credentials
 ///--------------------------------------------
